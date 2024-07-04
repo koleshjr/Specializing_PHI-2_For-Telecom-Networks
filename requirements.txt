@@ -1,0 +1,18 @@
+--extra-index-url https://download.pytorch.org/whl/cu101
+torch==2.3.0
+torchvision==0.18.0
+torchaudio==2.3.0
+ipykernel==2.3.0
+git+https://github.com/huggingface/transformers
+einops==0.8.0
+peft==0.11.1
+trl==0.9.4
+matplotlib==3.7.1
+pandas==2.0.3
+openpyxl==3.1.5
+accelerate==0.32.0
+bitsandbytes==0.43.1
+open_retrieval==0.0.1
+tqdm==4.66.4
+scikit-learn==1.5.1
+numpy==2.0.0

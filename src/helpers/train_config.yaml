@@ -18,14 +18,19 @@ model:
   torch_dtype: "float32"
 
 lora:
-  r: 64
-  lora_alpha: 16
+  r: 16
+  lora_alpha: 32
   target_modules:
     - "Wqkv"
     - "fc1"
     - "fc2"
+    - 'q_proj'
+    - 'k_proj'
+    - 'v_proj'
+    - 'dense'
   bias: "none"
   lora_dropout: 0.05
+  task_type: 'CAUSAL_LM'
 
 training:
   steps_save_eval_loss: 50
@@ -34,7 +39,7 @@ training:
   per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
   gradient_accumulation_steps: 2
-  learning_rate: 2.5e-5
+  learning_rate: 1.0e-3
   optim: "paged_adamw_8bit"
 
 wandb:

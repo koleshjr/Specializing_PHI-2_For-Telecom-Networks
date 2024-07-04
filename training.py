@@ -62,10 +62,10 @@ def prepare_data(config):
 
 def prepare_model(config):
     logging.info("Preparing model...")
-    bnb_config = BitsAndBytesConfig(load_in_8bit=config['model']['load_in_8bit'])
+    bnb_config = BitsAndBytesConfig(**config['bits_and_bytes'])
     model = AutoModelForCausalLM.from_pretrained(
         config['model']['name'],
-        torch_dtype=getattr(torch, config['model']['torch_dtype']),
+        torch_dtype=torch.float32,
         device_map="auto",
         trust_remote_code=True,
         quantization_config=bnb_config

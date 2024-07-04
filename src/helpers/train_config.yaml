@@ -14,8 +14,16 @@ data:
 
 model:
   name: "microsoft/phi-2"
-  load_in_8bit: true
   torch_dtype: "float32"
+
+bits_and_bytes:
+  load_in_4bit : True,
+  bnb_4bit_quant_type : 'nf4'
+  bnb_4bit_compute_dtype : 'float16'
+  bnb_4bit_use_double_quant : True
+
+device:
+  name: "cuda"
 
 lora:
   r: 16

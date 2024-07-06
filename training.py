@@ -14,14 +14,14 @@ from transformers import (
     DataCollatorForLanguageModeling,
     BitsAndBytesConfig
 )
-
+from dotenv import load_dotenv
 from src.helpers.utils import (
     build_train_dataset,
     build_and_load_rag_data,
     tokenizePrompt,
     tokenizePromptAdjustedLengths
 )
-
+load_dotenv()
 def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
@@ -56,13 +56,15 @@ def prepare_data(config):
     train_df = train_df.reset_index(drop=True)
     eval_df = eval_df.reset_index(drop=True)
 
-    logging.info(f"Train shape: {train_df.shape}, Eval shape: {eval_df.shape}")
+    logging.info("Train shape: {}, Eval shape: {}".format(train_df.shape, eval_df.shape))
 
     return Dataset.from_pandas(train_df), Dataset.from_pandas(eval_df)
 
 def prepare_model(config):
     logging.info("Preparing model...")
+    print(config['bits_and_bytes'])
     bnb_config = BitsAndBytesConfig(**config['bits_and_bytes'])
+
     model = AutoModelForCausalLM.from_pretrained(
         config['model']['name'],
         torch_dtype=torch.float32,
@@ -83,14 +85,28 @@ def prepare_model(config):
     lora_config = LoraConfig(**config['lora'])
     model = get_peft_model(model, lora_config)
 
-    logging.info(f"Trainable parameters: {model.print_trainable_parameters()}")
+    logging.info("Trainable parameters: {}".format(model.print_trainable_parameters()))
 
     return model, tokenizer
 def tokenize_data(train_data, eval_data, tokenizer):
     logging.info("Tokenizing data...")
     columns_to_remove = ["question", "answer", "option 1", "option 2", "option 3", "option 4", "option 5", "explanation", "category"]
 
-    tokenize_func = lambda x: tokenizePromptAdjustedLengths(x, tokenizer, max_length=None)
+    # Format and Tokenize datasets.
+    tokenizedTrain = train_data.map(lambda x: tokenizePrompt(x, tokenizer))
+    tokenizedVal = eval_data.map(lambda x: tokenizePrompt(x, tokenizer))
+
+    # count lengths of both datasets so we can adjust max length
+    lengthTokens:list=[len(x['input_ids']) for x in tokenizedTrain] # count lengths of tokenizedTrain
+    if tokenizedVal != None:
+        lengthTokens += [len(x['input_ids']) for x in tokenizedVal] # count lengths of tokenizedVal
+    maxLengthTokens:int=max(lengthTokens) + 2 #  we could also visualise lengthTokens using matplotlib if we wish to see the distribution
+    tokenDiffOriginal:int=maxLengthTokens-min(lengthTokens) # create metric original
+    logging.info("maxLengthTokens: {},tokenDiffOriginal: {}".format(maxLengthTokens, tokenDiffOriginal))
+
+    del tokenizedTrain; del tokenizedVal # clean up old variables
+
+    tokenize_func = lambda x: tokenizePromptAdjustedLengths(x, tokenizer, maxLengthTokens=maxLengthTokens)
     tokenized_train = train_data.map(tokenize_func, remove_columns=columns_to_remove)
     tokenized_val = eval_data.map(tokenize_func, remove_columns=columns_to_remove)
 
@@ -100,8 +116,9 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
     logging.info("Setting up training...")
     project = config['project']['name']
     model_name = config['model']['name'].replace("\\", "_").replace("/", "_")
-    run_name = f"{project}-{model_name}-{config['project']['experiment_version']}"
-    output_dir = f"./outputs/{run_name}"
+    run_name = "{}-{}-{}".format(project, model_name, config['project']['experiment_version'])
+
+    output_dir = "./outputs/{}".format(run_name)
 
     if torch.cuda.device_count() > 1:
         model.is_parallelizable = True
@@ -109,8 +126,7 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
 
     training_args = TrainingArguments(
         output_dir=output_dir,
-        **config['training'],
-        logging_dir=f"{output_dir}/logs",
+        logging_dir="{}/logs".format(output_dir),
         logging_steps=config['training']['steps_save_eval_loss'],
         do_eval=True,
         evaluation_strategy="steps",
@@ -119,8 +135,13 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
         save_steps=config['training']['steps_save_eval_loss'],
         load_best_model_at_end=True,
         report_to="wandb" if config['wandb']['enabled'] else None,
+        warmup_steps=config['training']['warmup_steps'],
+        per_device_train_batch_size=config['training']['per_device_train_batch_size'],
+        per_device_eval_batch_size=config['training']['per_device_eval_batch_size'],
+        gradient_accumulation_steps=config['training']['gradient_accumulation_steps'],
+        learning_rate=config['training']['learning_rate'],
+        optim=config['training']['optim']
     )
-
     trainer = Trainer(
         model=model,
         train_dataset=tokenized_train,
@@ -141,7 +162,7 @@ def main():
     train_data, eval_data = prepare_data(config)
     model, tokenizer = prepare_model(config)
     tokenized_train, tokenized_val = tokenize_data(train_data, eval_data, tokenizer)
-    trainer = setup_training(config, model, tokenized_train, tokenized_val)
+    trainer = setup_training(config, model, tokenizer, tokenized_train, tokenized_val)
 
     logging.info("Starting training...")
     model.config.use_cache = False
@@ -150,22 +171,26 @@ def main():
     logging.info("Saving model...")
     # Create a descriptive model name
     model_name = (
-        f"phi-2-teleqa-"
-        f"{config['project']['experiment_version']}-"
-        f"{config['training']['number_step_partitions'] * config['training']['steps_save_eval_loss']}-steps-"
-        f"lr-{config['training']['learning_rate']}"
+    "phi-2-teleqa-"
+    "{}-"
+    "{}-steps-"
+    "lr-{}".format(
+        config['project']['experiment_version'],
+        config['training']['number_step_partitions'] * config['training']['steps_save_eval_loss'],
+        config['training']['learning_rate']
     )
-    
+    )
+
     # Remove any characters that might cause issues in the model name
     model_name = model_name.replace("e-", "e").replace(".", "-")
     
     model.push_to_hub(
         model_name,
-        commit_message=f"Training Phi-2 with RAG - {config['project']['experiment_version']}",
+        commit_message="Training Phi-2 with RAG - {}".format(config['project']['experiment_version']),
         private=True,
         token=os.getenv('HF_TOKEN')
     )
-    logging.info(f"Model saved as: {model_name}")
+    logging.info("Model saved as: {}".format(model_name))
     logging.info("Training completed.")
     if config['wandb']['enabled']:
         wandb.finish()

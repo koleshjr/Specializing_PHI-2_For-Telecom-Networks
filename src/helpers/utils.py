@@ -3,12 +3,12 @@ import json
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
-from open_retrieval.document_loaders import DocumentLoader
-from open_retrieval.text_splitters import TextSplitter
-from open_retrieval.embedding_providers import EmbeddingProvider
-from open_retrieval.vector_databases import VectorDatabase
-from open_retrieval.retrievers import Retriever
-from rerankers import Reranker
+# from open_retrieval.document_loaders import DocumentLoader
+# from open_retrieval.text_splitters import TextSplitter
+# from open_retrieval.embedding_providers import EmbeddingProvider
+# from open_retrieval.vector_databases import VectorDatabase
+# from open_retrieval.retrievers import Retriever
+# from rerankers import Reranker
 from sklearn.metrics import (accuracy_score,
                              classification_report,
                              confusion_matrix)
@@ -77,27 +77,27 @@ def build_test_dataset(path_1: str, path_2: str):
     return test
 
 def build_and_load_rag_data(data: pd.DataFrame, rag_file_path: str,index_dir: str, index_name: str):
-    if not os.path.exists(rag_file_path):
-        embedding_provider = 'huggingface'
-        database = 'faiss'
-        ranking_model = 'colbert'
-        ranker = Reranker(ranking_model, verbose = 0)
-        vector_database = VectorDatabase(vector_store=database)
-        embedding_function = EmbeddingProvider(embedding_provider=embedding_provider).get_embedding_function( model_name = 'BAAI/bge-base-en-v1.5')
-        vector_index =  vector_database.create_index(embedding_function=embedding_function, index_name=index_name,index_dir=index_dir)
-        retriever = Retriever(vector_index, ranker)
+    # if not os.path.exists(rag_file_path):
+    #     embedding_provider = 'huggingface'
+    #     database = 'faiss'
+    #     ranking_model = 'colbert'
+    #     ranker = Reranker(ranking_model, verbose = 0)
+    #     vector_database = VectorDatabase(vector_store=database)
+    #     embedding_function = EmbeddingProvider(embedding_provider=embedding_provider).get_embedding_function( model_name = 'BAAI/bge-base-en-v1.5')
+    #     vector_index =  vector_database.create_index(embedding_function=embedding_function, index_name=index_name,index_dir=index_dir)
+    #     retriever = Retriever(vector_index, ranker)
 
-        for i, row in tqdm(data.iterrows(), total= data.shape[0]):
-            result = retriever.ranked_retrieval(query= row['question'], top_k = 15, ranked_top_k = 5)
-            data.loc[i, 'context_1'] = result[0]
-            data.loc[i, 'context_2'] = result[1]
-            data.loc[i, 'context_3'] = result[2]
-            data.loc[i, 'context_4'] = result[3]
-            data.loc[i, 'context_5'] = result[4]
+    #     for i, row in tqdm(data.iterrows(), total= data.shape[0]):
+    #         result = retriever.ranked_retrieval(query= row['question'], top_k = 15, ranked_top_k = 5)
+    #         data.loc[i, 'context_1'] = result[0]
+    #         data.loc[i, 'context_2'] = result[1]
+    #         data.loc[i, 'context_3'] = result[2]
+    #         data.loc[i, 'context_4'] = result[3]
+    #         data.loc[i, 'context_5'] = result[4]
 
-        data.to_csv(rag_file_path, index=False)
-    else:
-        data = pd.read_csv(rag_file_path)
+    #     data.to_csv(rag_file_path, index=False)
+    # else:
+    data = pd.read_csv(rag_file_path)
     return data
 
 def evaluate(y_true, y_pred):
@@ -129,8 +129,6 @@ def formattingFunc(row):
       {row['context_1']} \n
       {row['context_2']} \n
       {row['context_3']} \n
-      {row['context_4']} \n
-      {row['context_5']} \n
 
       \n###Options:
       Option 1: {row['option 1']} \n

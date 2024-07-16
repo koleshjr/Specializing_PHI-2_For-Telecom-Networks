@@ -41,14 +41,15 @@ lora:
   task_type: 'CAUSAL_LM'
 
 training:
-  steps_save_eval_loss: 50
-  number_step_partitions: 40
+  steps_save_eval_loss: 100
+  number_step_partitions: 100
   warmup_steps: 250
   per_device_train_batch_size: 2
   per_device_eval_batch_size: 2
   gradient_accumulation_steps: 2
   learning_rate: 1.0e-3
   optim: "paged_adamw_8bit"
+  num_train_epochs: 5
 
 wandb:
   enabled: true

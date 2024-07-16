@@ -1,7 +1,6 @@
-import os
+import re
 import json
 import pandas as pd
-from tqdm import tqdm
 import numpy as np
 # from open_retrieval.document_loaders import DocumentLoader
 # from open_retrieval.text_splitters import TextSplitter
@@ -127,8 +126,6 @@ def formattingFunc(row):
       {row['question']}
       \n###Supporting Context:
       {row['context_1']} \n
-      {row['context_2']} \n
-      {row['context_3']} \n
 
       \n###Options:
       Option 1: {row['option 1']} \n
@@ -157,3 +154,11 @@ def tokenizePromptAdjustedLengths(prompt:object, tokenizer:object, maxLengthToke
         padding="max_length",
     )
     return tokenizedResponse
+
+def extract_json_from_string(s):
+    pattern = re.compile(r'\[.*\]', re.DOTALL)
+    match = pattern.search(s)
+    if match:
+        json_data = match.group()
+        return json.loads(json_data)
+    return None

@@ -1,4 +1,6 @@
 import os 
+import random
+import numpy as np
 import logging 
 from datasets import Dataset
 from sklearn.model_selection import train_test_split
@@ -31,6 +33,23 @@ def setup_logging():
             logging.StreamHandler()
         ]
     )
+
+def random_seed(seed_value, use_cuda): 
+    np.random.seed(seed_value)
+ #cpu vars
+    torch.manual_seed(seed_value) 
+# cpu  vars
+    random.seed(seed_value)
+ # Python 
+    if use_cuda: 
+        torch.cuda.manual_seed(seed_value) 
+        torch.cuda.manual_seed_all(seed_value) 
+# gpu vars
+        torch.backends.cudnn.deterministic = True 
+ #needed
+        torch.backends.cudnn.benchmark = False 
+#Remember to use num_workers=0 when creating the DataBunch.
+
 
 def load_config():
     with open('src/helpers/train_config.yaml', 'r') as f:
@@ -140,7 +159,8 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
         per_device_eval_batch_size=config['training']['per_device_eval_batch_size'],
         gradient_accumulation_steps=config['training']['gradient_accumulation_steps'],
         learning_rate=config['training']['learning_rate'],
-        optim=config['training']['optim']
+        optim=config['training']['optim'],
+        num_train_epochs= config['training']['num_train_epochs']
     )
     trainer = Trainer(
         model=model,
@@ -153,6 +173,7 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
     return trainer
 
 def main():
+    # random_seed(2022,True)
     setup_logging()
     config = load_config()
 
@@ -173,11 +194,11 @@ def main():
     model_name = (
     "phi-2-teleqa-"
     "{}-"
-    "{}-steps-"
+    "{}-epochs-"
     "lr-{}".format(
         config['project']['experiment_version'],
-        config['training']['number_step_partitions'] * config['training']['steps_save_eval_loss'],
-        config['training']['learning_rate']
+        config['training']['num_train_epochs'],
+        config['training']['learning_rate'],
     )
     )
 

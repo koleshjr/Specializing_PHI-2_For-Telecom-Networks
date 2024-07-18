@@ -121,21 +121,27 @@ def evaluate(y_true, y_pred):
 
 
 def formattingFunc(row):
-    prompt = f"""
-      \n###Question:
-      {row['question']}
-      \n###Supporting Context:
-      {row['context_1']} \n
+    prompt = "### Context:"
+    
+    # Adding contexts
+    for context in ['context_1', 'context_2', 'context_3']:
+        if row.get(context) is not None and row[context].strip():
+            prompt += f"{row[context]}\n"
+    
+    # Adding question
+    prompt += f"\n### Question:\n\nBased on the above context: {row['question']}\n\n### Options:\n"
 
-      \n###Options:
-      Option 1: {row['option 1']} \n
-      Option 2: {row['option 2']} \n
-      Option 3: {row['option 3']} \n
-      Option 4: {row['option 4']} \n
-      Option 5: {row['option 5']} \n
-      \n###Answer: {row['answer']}
-    """
+    # Adding options
+    for i in range(1, 6):
+        option = row.get(f'option {i}')
+        if option is not None and option.strip():
+            prompt += f"{i}. {option}\n"
+
+    # Adding answer
+    prompt += f"\n### Answer: {row['answer']}\n"
+    
     return prompt
+
 
 def tokenizePrompt(prompt:object, tokenizer: object) -> dict:
     tokenizedPrompt = tokenizer(formattingFunc(prompt))

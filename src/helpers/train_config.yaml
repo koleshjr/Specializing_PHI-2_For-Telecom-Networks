@@ -6,7 +6,7 @@ project:
 data:
   train_path_1: "data/TeleQnA_training.txt"
   train_path_2: "data/Q_A_ID_training.csv"
-  rag_file_path: "data/train_with_rag_ranked_filtered.csv"
+  rag_file_path: "data/train_with_rag_ranked_filtered_5k.csv"
   index_dir: "indexes"
   index_name: "teleqa_256_faiss_openai_bge_base_v1.5"
   test_size: 0.1

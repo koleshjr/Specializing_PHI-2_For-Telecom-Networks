@@ -65,19 +65,10 @@ def prepare_data(config):
         index_name=config['data']['index_name']
     )
 
-    train_df, eval_df = train_test_split(
-        train_with_rag,
-        test_size=config['data']['test_size'],
-        random_state=config['data']['random_state'],
-        stratify=train['Answer_ID']
-    )
+    logging.info("Dataset shape: {}".format(train_with_rag.shape))
 
-    train_df = train_df.reset_index(drop=True)
-    eval_df = eval_df.reset_index(drop=True)
+    return Dataset.from_pandas(train_with_rag)
 
-    logging.info("Train shape: {}, Eval shape: {}".format(train_df.shape, eval_df.shape))
-
-    return Dataset.from_pandas(train_df), Dataset.from_pandas(eval_df)
 
 def prepare_model(config):
     logging.info("Preparing model...")
@@ -107,31 +98,27 @@ def prepare_model(config):
     logging.info("Trainable parameters: {}".format(model.print_trainable_parameters()))
 
     return model, tokenizer
-def tokenize_data(train_data, eval_data, tokenizer):
+def tokenize_data(data, tokenizer):
     logging.info("Tokenizing data...")
     columns_to_remove = ["question", "answer", "option 1", "option 2", "option 3", "option 4", "option 5", "explanation", "category"]
 
-    # Format and Tokenize datasets.
-    tokenizedTrain = train_data.map(lambda x: tokenizePrompt(x, tokenizer))
-    tokenizedVal = eval_data.map(lambda x: tokenizePrompt(x, tokenizer))
+    # Format and Tokenize dataset
+    tokenized_data = data.map(lambda x: tokenizePrompt(x, tokenizer))
 
-    # count lengths of both datasets so we can adjust max length
-    lengthTokens:list=[len(x['input_ids']) for x in tokenizedTrain] # count lengths of tokenizedTrain
-    if tokenizedVal != None:
-        lengthTokens += [len(x['input_ids']) for x in tokenizedVal] # count lengths of tokenizedVal
-    maxLengthTokens:int=max(lengthTokens) + 2 #  we could also visualise lengthTokens using matplotlib if we wish to see the distribution
-    tokenDiffOriginal:int=maxLengthTokens-min(lengthTokens) # create metric original
-    logging.info("maxLengthTokens: {},tokenDiffOriginal: {}".format(maxLengthTokens, tokenDiffOriginal))
+    # count lengths of dataset so we can adjust max length
+    lengthTokens = [len(x['input_ids']) for x in tokenized_data]
+    maxLengthTokens = max(lengthTokens) + 2
+    tokenDiffOriginal = maxLengthTokens - min(lengthTokens)
+    logging.info("maxLengthTokens: {}, tokenDiffOriginal: {}".format(maxLengthTokens, tokenDiffOriginal))
 
-    del tokenizedTrain; del tokenizedVal # clean up old variables
+    del tokenized_data  # clean up old variable
 
     tokenize_func = lambda x: tokenizePromptAdjustedLengths(x, tokenizer, maxLengthTokens=maxLengthTokens)
-    tokenized_train = train_data.map(tokenize_func, remove_columns=columns_to_remove)
-    tokenized_val = eval_data.map(tokenize_func, remove_columns=columns_to_remove)
+    tokenized_data = data.map(tokenize_func, remove_columns=columns_to_remove)
 
-    return tokenized_train, tokenized_val
+    return tokenized_data
 
-def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
+def setup_training(config, model, tokenizer, tokenized_data):
     logging.info("Setting up training...")
     project = config['project']['name']
     model_name = config['model']['name'].replace("\\", "_").replace("/", "_")
@@ -147,25 +134,20 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
         output_dir=output_dir,
         logging_dir="{}/logs".format(output_dir),
         logging_steps=config['training']['steps_save_eval_loss'],
-        do_eval=True,
-        evaluation_strategy="steps",
-        eval_steps=config['training']['steps_save_eval_loss'],
+        do_eval=False,  # No evaluation
         save_strategy="steps",
         save_steps=config['training']['steps_save_eval_loss'],
-        load_best_model_at_end=True,
         report_to="wandb" if config['wandb']['enabled'] else None,
         warmup_steps=config['training']['warmup_steps'],
         per_device_train_batch_size=config['training']['per_device_train_batch_size'],
-        per_device_eval_batch_size=config['training']['per_device_eval_batch_size'],
         gradient_accumulation_steps=config['training']['gradient_accumulation_steps'],
         learning_rate=config['training']['learning_rate'],
         optim=config['training']['optim'],
-        num_train_epochs= config['training']['num_train_epochs']
+        num_train_epochs=config['training']['num_train_epochs']
     )
     trainer = Trainer(
         model=model,
-        train_dataset=tokenized_train,
-        eval_dataset=tokenized_val,
+        train_dataset=tokenized_data,
         args=training_args,
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
     )
@@ -173,17 +155,16 @@ def setup_training(config, model, tokenizer, tokenized_train, tokenized_val):
     return trainer
 
 def main():
-    # random_seed(2022,True)
     setup_logging()
     config = load_config()
 
     if config['wandb']['enabled']:
         wandb.init(project=config['wandb']['project'], config=config)
 
-    train_data, eval_data = prepare_data(config)
+    data = prepare_data(config)
     model, tokenizer = prepare_model(config)
-    tokenized_train, tokenized_val = tokenize_data(train_data, eval_data, tokenizer)
-    trainer = setup_training(config, model, tokenizer, tokenized_train, tokenized_val)
+    tokenized_data = tokenize_data(data, tokenizer)
+    trainer = setup_training(config, model, tokenizer, tokenized_data)
 
     logging.info("Starting training...")
     model.config.use_cache = False
@@ -195,7 +176,8 @@ def main():
     "phi-2-teleqa-"
     "{}-"
     "{}-epochs-"
-    "lr-{}".format(
+    "lr-{}-"
+    "full-dataset".format(
         config['project']['experiment_version'],
         config['training']['num_train_epochs'],
         config['training']['learning_rate'],
@@ -207,7 +189,7 @@ def main():
     
     model.push_to_hub(
         model_name,
-        commit_message="Training Phi-2 with RAG - {}".format(config['project']['experiment_version']),
+        commit_message="Training Phi-2 with RAG - {} - Full Dataset".format(config['project']['experiment_version']),
         private=True,
         token=os.getenv('HF_TOKEN')
     )

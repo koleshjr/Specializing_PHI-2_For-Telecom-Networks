@@ -124,12 +124,13 @@ def formattingFunc(row):
     prompt = "### Context:"
     
     # Adding contexts
-    for context in ['context_1', 'context_2', 'context_3']:
+    for context in ['context_1', 'context_2']:
         if row.get(context) is not None and row[context].strip():
-            prompt += f"{row[context]}\n"
+            prompt += f"{row[context]}"
     
     # Adding question
-    prompt += f"\n### Question:\n\nBased on the above context: {row['question']}\n\n### Options:\n"
+ 
+    prompt += f"\n\n### Question:\n\nBased on the above context and extra knowledge you already have: {row['question']}\n\n### Options:\n"
 
     # Adding options
     for i in range(1, 6):
@@ -141,7 +142,6 @@ def formattingFunc(row):
     prompt += f"\n### Answer: {row['answer']}\n"
     
     return prompt
-
 
 def tokenizePrompt(prompt:object, tokenizer: object) -> dict:
     tokenizedPrompt = tokenizer(formattingFunc(prompt))

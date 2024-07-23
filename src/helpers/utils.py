@@ -124,7 +124,7 @@ def formattingFunc(row):
     prompt = "### Context:"
     
     # Adding contexts
-    for context in ['context_1', 'context_2']:
+    for context in ['context_1']:
         if row.get(context) is not None and row[context].strip():
             prompt += f"{row[context]}"
     
@@ -139,7 +139,7 @@ def formattingFunc(row):
             prompt += f"{i}. {option}\n"
 
     # Adding answer
-    prompt += f"\n### Answer: {row['answer']}\n"
+    prompt += f"\n### Answer: {row['answer']} \n"
     
     return prompt
 

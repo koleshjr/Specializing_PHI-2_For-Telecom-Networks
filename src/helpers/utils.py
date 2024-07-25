@@ -124,7 +124,7 @@ def formattingFunc(row):
     prompt = "### Context:"
     
     # Adding contexts
-    for context in ['context_1']:
+    for context in ['context_1','context_2']:
         if row.get(context) is not None and row[context].strip():
             prompt += f"{row[context]}"
     
@@ -140,6 +140,28 @@ def formattingFunc(row):
 
     # Adding answer
     prompt += f"\n### Answer: {row['answer']} \n"
+    
+    return prompt
+
+def testformattingFunc(row):
+    prompt = "### Context:"
+    
+    # Adding contexts
+    for context in ['context_1', 'context_2']:
+        if row.get(context) is not None and str(row[context]).strip():
+            prompt += f"{row[context]}"
+    
+    # Adding question
+    prompt += f"\n\n### Question:\n\nBased on the above context and extra knowledge you already have: {row['question']}\n\n### Options:\n"
+
+    # Adding options
+    for i in range(1, 6):
+        option = row.get(f'option {i}')
+        if option is not None and str(option).strip():
+            prompt += f"{i}. {option}\n"
+
+    # Adding answer
+    prompt += f"\n### Answer:"
     
     return prompt
 
@@ -168,3 +190,24 @@ def extract_json_from_string(s):
         json_data = match.group()
         return json.loads(json_data)
     return None
+
+def get_answer_id(response):
+    # Extract the part after "###Answer:"
+    answer = response.split("###Answer:")[-1].strip()
+
+    # Define regex patterns for both uppercase and lowercase "Option"
+    patterns = [r"Option (\d+):", r"option (\d+):"]
+
+    for pattern in patterns:
+        match = re.search(pattern, answer)
+        if match:
+            return int(match.group(1))
+
+    # If no match found, try to extract any number from the answer
+    numbers = re.findall(r'\d+', answer)
+    if numbers:
+        return int(numbers[0])
+
+    # If still no match, return None
+    return None
+

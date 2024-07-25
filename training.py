@@ -177,7 +177,7 @@ def main():
     "{}-"
     "{}-epochs-"
     "lr-{}-"
-    "full-dataset-512".format(
+    "full-dataset-512-2k".format(
         config['project']['experiment_version'],
         config['training']['num_train_epochs'],
         config['training']['learning_rate'],

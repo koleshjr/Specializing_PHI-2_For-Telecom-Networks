@@ -47,7 +47,7 @@ training:
   per_device_train_batch_size: 2
   per_device_eval_batch_size: 2
   gradient_accumulation_steps: 2
-  learning_rate: 2.5e-5
+  learning_rate: 1.0e-3
   optim: "paged_adamw_8bit"
   num_train_epochs: 4
 

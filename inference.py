@@ -1,4 +1,5 @@
 import os
+import csv
 import torch
 import pandas as pd
 from tqdm import tqdm
@@ -15,7 +16,7 @@ from peft import PeftModel
 
 def main():
     load_dotenv()
-    test = pd.read_csv('data/test_with_rag_ranked_filtered_2k_512.csv')
+    original_test = pd.read_csv('data/test_with_rag_ranked_filtered_2k_512.csv')
     model_name = "microsoft/phi-2"
     finetunedFolder = "Koleshjr/phi-2-teleqa-1-0-0-3-epochs-lr-0-001-full-dataset-512-2k"
     
@@ -38,14 +39,21 @@ def main():
 
     FTmodel = PeftModel.from_pretrained(modelInference, finetunedFolder)
 
-    test['prompt'] = test.apply(testformattingFunc, axis=1)
+    original_test['prompt'] = original_test.apply(testformattingFunc, axis=1)
 
     if os.path.exists('data/test_with_rag_ranked_filtered_progress_2k_3epochs_512_v1.csv'):
         shutil.copy('data/test_with_rag_ranked_filtered_progress_2k_3epochs_512_v1.csv',
                     'data/test_with_rag_ranked_filtered_progress_backup_2k_3epochs_512_v1.csv')
-        test = pd.read_csv('data/test_with_rag_ranked_filtered_progress_2k_3epochs_512_v1.csv',encoding='utf-8')
+        mod_test = pd.read_csv('data/test_with_rag_ranked_filtered_progress_2k_3epochs_512_v1.csv', on_bad_lines='skip', engine='python')
     else:
-        test['response'] = ""
+        mod_test = original_test.copy()
+        mod_test['response'] = ""
+
+    # Identify skipped rows
+    skipped_rows = original_test[~original_test['id'].isin(mod_test['id'])]
+
+    # Concatenate skipped rows to mod_test
+    test = pd.concat([mod_test, skipped_rows], ignore_index=True)
 
     null_responses = test[test['response'].isnull() | (test['response'] == "")]
     repetition_penalty = 1.0

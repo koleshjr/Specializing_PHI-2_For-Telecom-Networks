@@ -6,9 +6,9 @@ project:
 data:
   train_path_1: "data/TeleQnA_training.txt"
   train_path_2: "data/Q_A_ID_training.csv"
-  rag_file_path: "data/train_with_rag_ranked_filtered_2k_512.csv"
+  rag_file_path: "data/train_with_rag_ranked_filtered_1k_1024.csv"
   index_dir: "indexes"
-  index_name: "teleqa_256_faiss_openai_bge_base_v1.5"
+  index_name: "teleqa_1024_faiss_openai_bge_base_v1.5"
   test_size: 0.1
   random_state: 42
 
@@ -49,7 +49,7 @@ training:
   gradient_accumulation_steps: 2
   learning_rate: 1.0e-3
   optim: "paged_adamw_8bit"
-  num_train_epochs: 3
+  num_train_epochs: 4
 
 wandb:
   enabled: true

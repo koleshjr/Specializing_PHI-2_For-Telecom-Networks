@@ -135,7 +135,7 @@ def formattingFunc(row):
     # Adding options
     for i in range(1, 6):
         option = row.get(f'option {i}')
-        if option is not None and option.strip():
+        if option is not None and str(option).strip():
             prompt += f"{i}. {option}\n"
 
     # Adding answer

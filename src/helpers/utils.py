@@ -124,7 +124,7 @@ def formattingFunc(row):
     prompt = "### Context:"
     
     # Adding contexts
-    for context in ['context_1','context_2']:
+    for context in ['context_1']:
         if row.get(context) is not None and row[context].strip():
             prompt += f"{row[context]}"
     
@@ -147,7 +147,7 @@ def testformattingFunc(row):
     prompt = "### Context:"
     
     # Adding contexts
-    for context in ['context_1', 'context_2']:
+    for context in ['context_1']:
         if row.get(context) is not None and str(row[context]).strip():
             prompt += f"{row[context]}"
     

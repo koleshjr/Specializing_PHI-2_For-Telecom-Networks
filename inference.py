@@ -18,7 +18,7 @@ def main():
     load_dotenv()
     original_test = pd.read_csv('data/test_with_rag_ranked_filtered_2k_512.csv')
     model_name = "microsoft/phi-2"
-    finetunedFolder = "Koleshjr/phi-2-teleqa-1-0-0-4-epochs-lr-0-001-full-dataset-512"
+    finetunedFolder = "Koleshjr/phi-2-teleqa-1-0-0-5-epochs-lr-0-001-full-dataset-512-1k"
     
     bnb_config = BitsAndBytesConfig(load_in_4bit=True,
                                     bnb_4bit_quant_type='nf4',
@@ -41,10 +41,10 @@ def main():
 
     original_test['prompt'] = original_test.apply(testformattingFunc, axis=1)
 
-    if os.path.exists('data/test_with_rag_ranked_filtered_progress_2k_4epochs_2k_512_model.csv'):
-        shutil.copy('data/test_with_rag_ranked_filtered_progress_2k_4epochs_2k_512_model.csv',
-                    'data/test_with_rag_ranked_filtered_progress_backup_2k_4epochs_2k_512_model.csv')
-        mod_test = pd.read_csv('data/test_with_rag_ranked_filtered_progress_2k_4epochs_2k_512_model.csv', on_bad_lines='skip', engine='python')
+    if os.path.exists('data/test_with_rag_ranked_filtered_progress_1k_5epochs_2k_512_model.csv'):
+        shutil.copy('data/test_with_rag_ranked_filtered_progress_1k_5epochs_2k_512_model.csv',
+                    'data/test_with_rag_ranked_filtered_progress_backup_1k_5epochs_2k_512_model.csv')
+        mod_test = pd.read_csv('data/test_with_rag_ranked_filtered_progress_1k_5epochs_2k_512_model.csv', on_bad_lines='skip', engine='python')
     else:
         mod_test = original_test.copy()
         mod_test['response'] = ""
@@ -65,7 +65,7 @@ def main():
             tokenisedPrompt = tokenizerInference(row['prompt'], return_tensors="pt").to("cuda")
             response = tokenizerInference.decode(FTmodel.generate(**tokenisedPrompt, max_new_tokens=max_tokens, repetition_penalty=repetition_penalty)[0], skip_special_tokens=True)
             test.loc[i, 'response'] = response
-            test.to_csv('data/test_with_rag_ranked_filtered_progress_2k_4epochs_2k_512_model.csv', index=False)
+            test.to_csv('data/test_with_rag_ranked_filtered_progress_1k_5epochs_2k_512_model.csv', index=False)
 
     test['Task'] = "Phi-2"
     test['Answer_ID'] = test['response'].apply(get_answer_id)
@@ -74,7 +74,7 @@ def main():
     test['Answer_ID'] = test['Answer_ID'].fillna(4)
     test['Answer_ID'] = test['Answer_ID'].astype(int)
     submission = test[['Question_ID', 'Answer_ID', 'Task']]
-    submission.to_csv('data/submission_with_rag_ranked_filtered_progress_2k_4epochs_2k_512_model.csv', index=False)
+    submission.to_csv('data/submission_with_rag_ranked_filtered_progress_1k_5epochs_2k_512_model.csv', index=False)
 
 if __name__ == "__main__":
     main()

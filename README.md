@@ -6,4 +6,4 @@ While LLMs have undeniably demonstrated their prowess across diverse sectors, th
 
 This challenge will adopt part of the recently developed TeleQnA dataset [1], composed by multiple-choice questions related to different classes of telecom knowledge domains [2], and will require participants to work on (at least one of) the following independent tasks:
 
-    Specialize Phi-2 on telecom knowledge: In this task, the participants will download Phi-2 [4] (https://huggingface.co/microsoft/phi-2), and improve such model on their local computing facilities. The participants will be required to enhance the baseline model accuracy when answering to the multiple-choice questions included in the TeleQnA dataset by developing novel solutions or combining existing methods such as fine tuning, RAG and prompt engineering.
+* Specialize Phi-2 on telecom knowledge: In this task, I will improve PHI-2 model to enhance the baseline model accuracy when answering to the multiple-choice questions included in the TeleQnA dataset by developing novel solutions or combining existing methods such as RAG, Finetuning and prompt Engineering

@@ -1,2 +1,9 @@
-# Phi2-Finetuning
-Finetune Phi2 to be better at RAG
+# Specializing Large Language Models for Telecom Networks by ITU AI/ML in 5G Challenge
+
+Large language models (LLMs) have spearheaded a new era marked by sophisticated text generation, advanced comprehension, and dynamic interaction. The evolutionary path of LLMs originates from the early stages of machine learning (ML) and natural language processing (NLP), characterized by the emergence of statistical language models and the gradual evolution of neural networks. Yet, the true transformation came through deep learning (DL) breakthroughs, particularly the rise of transformer architectures. These innovations have paved the way for the birth of language models with an unprecedented ability to process and generate extensive volumes of comprehensive textual content. Among these remarkable strides, OpenAI's generative pre-trained Transformer (GPT) series has emerged as a beacon, outshining its predecessors in both scale and capability. This ascent has empowered these models to achieve human-like language understanding and generation.
+
+While LLMs have undeniably demonstrated their prowess across diverse sectors, their integration into the telecommunications industry has been somewhat limited. However, this landscape is undergoing a gradual metamorphosis as researchers delve deeper into the potential of LLMs within this domain. With this competition, our objective is to tackle this challenge and pave the way for the development of telecom GPTs.
+
+This challenge will adopt part of the recently developed TeleQnA dataset [1], composed by multiple-choice questions related to different classes of telecom knowledge domains [2], and will require participants to work on (at least one of) the following independent tasks:
+
+    Specialize Phi-2 on telecom knowledge: In this task, the participants will download Phi-2 [4] (https://huggingface.co/microsoft/phi-2), and improve such model on their local computing facilities. The participants will be required to enhance the baseline model accuracy when answering to the multiple-choice questions included in the TeleQnA dataset by developing novel solutions or combining existing methods such as fine tuning, RAG and prompt engineering.
